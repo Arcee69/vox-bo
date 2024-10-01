@@ -38,7 +38,7 @@ const Login = () => {
                     autoClose: 3500,
                     closeOnClick: true,
                 });
-                navigate("/subscribers")
+                navigate("/users")
             }
         }
         catch (err) {

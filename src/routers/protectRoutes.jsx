@@ -27,6 +27,6 @@ export const ProtectRoutes = () => {
         <Outlet />
       </>
     ) : (
-      <Navigate to="/dashboard" state={{ from: location }} replace />
+      <Navigate to="/users" state={{ from: location }} replace />
     );
   };
