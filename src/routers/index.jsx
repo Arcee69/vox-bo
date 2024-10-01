@@ -3,7 +3,10 @@ import { Route, Routes } from 'react-router-dom'
 
 import { AuthProtectRoutes, ProtectRoutes } from './protectRoutes'
 import Login from '../pages/auth/login'
-import Subscribers from '../pages/subscribers'
+
+import Users from '../pages/users'
+import Consultations from '../pages/consultation'
+import Transactions from '../pages/transactions'
 
 
 
@@ -36,7 +39,9 @@ const Routers = () => {
         ) : (
           <>
             <Route element={<ProtectRoutes />}>
-                <Route path='/subscribers' element={<Subscribers />} />
+                <Route path='/users' element={<Users />} />
+                <Route path='/transactions' element={<Transactions />} />
+                <Route path='/consultation' element={<Consultations />} />
             </Route>
 
             <Route element={<AuthProtectRoutes />}>
