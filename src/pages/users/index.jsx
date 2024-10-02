@@ -1,35 +1,49 @@
 import React, { useState, useEffect } from 'react'
 import { CiSearch } from 'react-icons/ci'
 import ReactPaginate from 'react-paginate'
-
 import * as XLSX from 'xlsx';
-
 import Filter from "../../assets/svg/filter.svg"
-
 import { api } from '../../services/api'
 import { appUrls } from '../../services/urls'
 import { Skeleton } from '@mui/material'
 
 const Users = () => {
   const [allUsers, setAllUsers] = useState([])
+  const [filteredUsers, setFilteredUsers] = useState([])  // State for filtered users
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10)
   const [itemOffset, setItemOffset] = useState(0);
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
+  const [active, setActive] = useState("All")  // Default to "All" tab
+
+  const handleChange = (value) => {
+    setActive(value);
+    filterUsers(value);  // Filter users based on tab clicked
+  }
 
   const getUsersList = async () => {
     setLoading(true)
     await api.get(appUrls?.USER_URL)
     .then((res) => {
       setLoading(false)
-          console.log(res, "res")
-          setAllUsers(res?.data?.data?.user)
+      setAllUsers(res?.data?.data?.user)
+      filterUsers("All")  // Initially set to show all users
     })
     .catch((err) => {
       setLoading(false)
       console.log(err, "err")
     })
+  }
+
+  const filterUsers = (filter) => {
+    let filtered = allUsers;
+    if (filter === "Active") {
+      filtered = allUsers?.filter(user => user.subscription_status === 1);
+    } else if (filter === "Inactive") {
+      filtered = allUsers?.filter(user => user.subscription_status === 0);
+    }
+    setFilteredUsers(filtered);
   }
 
   useEffect(() => {
@@ -43,44 +57,52 @@ const Users = () => {
     XLSX.writeFile(wb, 'users.xlsx');
   };
 
-
-
-  console.log(allUsers, "allUsers")
-
-  const filteredData = allUsers?.filter((item) => 
+  const filteredData = filteredUsers?.filter((item) => 
     item?.name?.toLowerCase().includes(search?.toLowerCase()) || ""
-)
+  )
 
   //Get Current data
   const endOffset = itemOffset + perPage;
-  console.log(`Loading items from ${itemOffset} to ${endOffset}`);
   const currentData = filteredData?.slice(itemOffset, endOffset);
   const pageCount = Math.ceil(filteredData?.length / perPage);
-
 
   //Change Page 
   const handlePageClick = (event) => {
       const newOffset = (event.selected * perPage) % filteredData?.length;
-      console.log(
-        `User requested page number ${event.selected}, which is offset ${newOffset}`
-      );
       setItemOffset(newOffset);
     };
 
   return (
-     <div className='p-4 flex flex-col mx-[33px] gap-[28px]'>
-   
-    <div className='bg-[#fff] p-[21px] h-[123px] rounded-lg flex items-center justify-between'>
-      <div className='flex flex-col w-[161px] p-3 h-[81px]'>
-        <p className='text-[12px] font-bold'>Total Users</p>
-        <p className='text-[24px]'>{`${allUsers?.length}`}</p>
+    <div className='p-4 flex flex-col mx-[33px] gap-[28px]'>
+      <div className='bg-[#fff] p-[21px] h-[123px] rounded-lg flex items-center justify-between'>
+        <div className='flex flex-col w-[161px] p-3 h-[81px]'>
+          <p className='text-[12px] font-bold'>Total Users</p>
+          <p className='text-[24px]'>{`${allUsers?.length}`}</p>
+        </div>
+        <div className='flex flex-col w-[161px] p-3 h-[81px]'>
+          <p className='text-[12px] font-bold'>Total Active Users</p>
+          <p className='text-[24px]'>{`${allUsers?.filter(user => user.subscription_status === 1).length}`}</p>
+        </div>
+        <div className='flex flex-col w-[161px] p-3 h-[81px]'>
+          <p className='text-[12px] font-bold'>Total Inactive Users</p>
+          <p className='text-[24px]'>{`${allUsers?.filter(user => user.subscription_status === 0).length}`}</p>
+        </div>
       </div>
-   
-     
-    </div>
 
-    <div className='bg-[#fff] flex flex-col pt-[23px] pl-[33px] pr-[33px] pb-[76px] mt-[28px] rounded'>
-      <div className='flex gap-3 items-center mb-[11px]'>
+      <div className='flex items-center'>
+        <div className={`w-[100px] flex items-center justify-center border p-2 border-grey-500 ${active === "All" ? "bg-gray-200" : ""}`} onClick={() => handleChange("All")}>
+          <p>All</p>
+        </div>
+        <div className={`w-[100px] flex items-center justify-center border p-2 border-grey-500 ${active === "Active" ? "bg-gray-200" : ""}`} onClick={() => handleChange("Active")}>
+          <p>Active</p>
+        </div>
+        <div className={`w-[100px] flex items-center justify-center border p-2 border-grey-500 ${active === "Inactive" ? "bg-gray-200" : ""}`} onClick={() => handleChange("Inactive")}>
+          <p>Inactive</p>
+        </div>
+      </div>
+
+      <div className='bg-[#fff] flex flex-col pt-[23px] pl-[33px] pr-[33px] pb-[76px]  rounded'>
+        <div className='flex gap-3 items-center mb-[11px]'>
           <div className='w-full bg-[#F8F8FA] flex items-center gap-[10px] p-2  rounded-lg'>
             <CiSearch className='w-[24px] h-[24px] text-[#9A9AA6]'/>
             <input 
@@ -133,7 +155,6 @@ const Users = () => {
                 <th className="font-medium px-2 text-[12px] text-[#B5B5C3] font-poppins text-left">
                     Time
                 </th>
-              
             </tr>
             {currentData?.length > 0 ? currentData?.map((data, index) => (
                 <tr key={index} className='bg-[#fff] h-[56px] border-t border-grey-100'>
@@ -161,7 +182,6 @@ const Users = () => {
                 <td colSpan="8" className="relative">
                     <div className='absolute inset-0 flex items-center justify-center'>
                         <div className='flex flex-col gap-2 items-center'>
-                            {/* <img src={Empty} alt='empty' className='w-[159px] h-[103px]'/> */}
                             <p>Oops! Nothing to see here.</p>
                         </div>
                     </div>
@@ -181,12 +201,9 @@ const Users = () => {
                 previousLabel="<"
                 renderOnZeroPageCount={null}
             />
-
-            </div>
-          
+          </div>
         </>
     </div>
-
   </div>
   )
 }
